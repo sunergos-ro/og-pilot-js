@@ -1,0 +1,37 @@
+{
+  "name": "og-pilot-js",
+  "version": "0.1.0",
+  "description": "JavaScript/TypeScript client for the OG Pilot Open Graph image generator.",
+  "license": "MIT",
+  "author": "Sunergos IT LLC",
+  "homepage": "https://ogpilot.com",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^25.1.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.5.0"
+  }
+}
