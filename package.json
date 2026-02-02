@@ -1,6 +1,6 @@
 {
   "name": "og-pilot-js",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "JavaScript/TypeScript client for the OG Pilot Open Graph image generator.",
   "license": "MIT",
   "author": "Sunergos IT LLC",
