@@ -2,7 +2,11 @@ import { Client } from "./client";
 import { Configuration, OgPilotConfigOptions } from "./config";
 import { ConfigurationError, OgPilotError, RequestError } from "./errors";
 import {
+  buildPathFromNextParams,
+  buildPathFromNextProps,
   clearCurrentRequest,
+  createExpressMiddleware,
+  getPathFromExpressRequest,
   setCurrentRequest,
   withRequestContext,
 } from "./request-context";
@@ -42,6 +46,10 @@ const OgPilot = {
   setCurrentRequest,
   clearCurrentRequest,
   withRequestContext,
+  createExpressMiddleware,
+  getPathFromExpressRequest,
+  buildPathFromNextProps,
+  buildPathFromNextParams,
   Configuration,
   ConfigurationError,
   OgPilotError,
@@ -50,11 +58,20 @@ const OgPilot = {
 
 export default OgPilot;
 export type { CreateImageOptions } from "./client";
+export type {
+  NextMetadataProps,
+  NextParams,
+  NextSearchParams,
+} from "./request-context";
 export {
+  buildPathFromNextParams,
+  buildPathFromNextProps,
   clearCurrentRequest,
   Client,
   Configuration,
   ConfigurationError,
+  createExpressMiddleware,
+  getPathFromExpressRequest,
   OgPilotConfigOptions,
   OgPilotError,
   RequestError,

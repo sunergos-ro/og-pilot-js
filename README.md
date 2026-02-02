@@ -88,38 +88,129 @@ The client automatically injects a `path` parameter on every request:
 | `default: true`  | Forces the `path` parameter to `/`, regardless of the current request (unless `path` is provided explicitly) |
 | `path: "/..."`   | Uses the provided path verbatim (normalized to start with `/`), overriding auto-resolution              |
 
-### Setting up request context
+### Framework Integration
 
-To enable automatic path resolution, set the current request context in your middleware:
+#### Next.js (App Router)
 
-**Express:**
-
-```ts
-import { setCurrentRequest, clearCurrentRequest } from "og-pilot-js";
-
-app.use((req, res, next) => {
-  setCurrentRequest({ url: req.originalUrl });
-  res.on("finish", () => clearCurrentRequest());
-  next();
-});
-```
-
-**Next.js App Router (middleware.ts):**
+In Next.js, the recommended approach is to use `generateMetadata` and build the
+path directly from `params` and `searchParams` (no middleware needed):
 
 ```ts
-import { setCurrentRequest } from "og-pilot-js";
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+// app/products/[id]/page.tsx
+import type { Metadata } from "next";
+import { buildPathFromNextProps, createImage } from "og-pilot-js";
 
-export function middleware(request: NextRequest) {
-  setCurrentRequest({
-    url: request.nextUrl.pathname + request.nextUrl.search
-  });
-  return NextResponse.next();
+export async function generateMetadata(props): Promise<Metadata> {
+  const path = await buildPathFromNextProps("/products/[id]", props);
+  const imageUrl = await createImage(
+    {
+      template: "product",
+      title: "Product page",
+    },
+    { path }
+  );
+
+  return {
+    openGraph: {
+      images: [imageUrl],
+    },
+  };
 }
 ```
 
-**Using withRequestContext (preferred for async safety):**
+For catch-all routes:
+
+```ts
+// app/blog/[...slug]/page.tsx
+import { buildPathFromNextProps } from "og-pilot-js";
+
+export async function generateMetadata(props) {
+  const path = await buildPathFromNextProps("/blog/[...slug]", props);
+  // => /blog/2024/launch?ref=twitter
+}
+```
+
+#### Express
+
+```ts
+import express from "express";
+import { createExpressMiddleware } from "og-pilot-js";
+
+const app = express();
+app.use(createExpressMiddleware());
+
+// Now path is automatically captured in all routes
+app.get("/blog/:slug", async (req, res) => {
+  const imageUrl = await createImage({
+    template: "blog_post",
+    title: "My Blog Post",
+  });
+  // path is automatically set to /blog/:slug
+});
+```
+
+#### Nuxt (useSeoMeta)
+
+Nuxt recommends `useSeoMeta` for SEO tags. You can generate the OG image URL
+server-side and pass it directly:
+
+```vue
+<!-- app/pages/products/[id].vue -->
+<script setup lang="ts">
+import { createImage } from "og-pilot-js";
+
+const route = useRoute();
+
+if (import.meta.server) {
+  const imageUrl = await createImage(
+    {
+      template: "product",
+      title: "Product page",
+    },
+    { path: route.fullPath }
+  );
+
+  useSeoMeta({
+    title: "Product page",
+    ogTitle: "Product page",
+    ogImage: imageUrl,
+    twitterCard: "summary_large_image",
+  });
+}
+</script>
+```
+
+If you need reactive metadata, pass a computed getter:
+
+```vue
+<script setup lang="ts">
+const title = ref("My title");
+
+useSeoMeta({
+  title,
+  ogTitle: () => title.value,
+});
+</script>
+```
+
+#### Other Frameworks
+
+For SvelteKit, Remix, or other frameworks, use `withRequestContext` in your server middleware:
+
+```ts
+// SvelteKit hooks (src/hooks.server.ts)
+import { setCurrentRequest } from "og-pilot-js";
+import type { Handle } from "@sveltejs/kit";
+
+export const handle: Handle = async ({ event, resolve }) => {
+  setCurrentRequest({ url: event.url.pathname + event.url.search });
+  return resolve(event);
+};
+```
+
+#### Using withRequestContext (async-safe)
+
+For fine-grained control or when middleware isn't suitable:
 
 ```ts
 import { withRequestContext, createImage } from "og-pilot-js";

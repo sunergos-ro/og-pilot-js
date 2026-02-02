@@ -143,6 +143,166 @@ export function getCurrentPath(): string | undefined {
   return getPathFromEnv();
 }
 
+// ============================================================================
+// Framework-specific helpers
+// ============================================================================
+
+export type NextParamValue = string | string[] | undefined;
+export type NextParams = Record<string, NextParamValue>;
+export type NextSearchParams = Record<string, NextParamValue>;
+export type NextMetadataProps = {
+  params: NextParams | Promise<NextParams>;
+  searchParams?: NextSearchParams | Promise<NextSearchParams>;
+};
+
+/**
+ * Builds a URL path for Next.js App Router routes.
+ *
+ * Pass your route pattern (e.g. "/products/[id]") and Next.js params/searchParams.
+ * This avoids middleware and fits naturally inside generateMetadata().
+ *
+ * @example app/products/[id]/page.tsx
+ * ```ts
+ * import { buildPathFromNextProps } from "og-pilot-js";
+ *
+ * export async function generateMetadata(props) {
+ *   const path = await buildPathFromNextProps("/products/[id]", props);
+ *   // => "/products/123?ref=twitter"
+ * }
+ * ```
+ */
+export async function buildPathFromNextProps(
+  routePattern: string,
+  props: NextMetadataProps
+): Promise<string> {
+  const params = await props.params;
+  const searchParams = props.searchParams
+    ? await props.searchParams
+    : undefined;
+  return buildPathFromNextParams(routePattern, params, searchParams);
+}
+
+/**
+ * Builds a URL path for Next.js App Router routes from params/searchParams.
+ *
+ * @example
+ * ```ts
+ * const path = buildPathFromNextParams(
+ *   "/blog/[...slug]",
+ *   { slug: ["2024", "launch"] },
+ *   { ref: "twitter" }
+ * );
+ * // => "/blog/2024/launch?ref=twitter"
+ * ```
+ */
+export function buildPathFromNextParams(
+  routePattern: string,
+  params: NextParams,
+  searchParams?: NextSearchParams
+): string {
+  const segments = routePattern
+    .split("/")
+    .filter((segment) => segment.length > 0);
+  const builtSegments: string[] = [];
+
+  for (const segment of segments) {
+    const catchAllMatch = segment.match(/^\[\.\.\.(.+)\]$/);
+    const optionalCatchAllMatch = segment.match(/^\[\[\.\.\.(.+)\]\]$/);
+    const paramMatch = segment.match(/^\[(.+)\]$/);
+
+    if (optionalCatchAllMatch) {
+      const key = optionalCatchAllMatch[1];
+      const value = params[key];
+      if (value === undefined) {
+        continue;
+      }
+      if (Array.isArray(value)) {
+        builtSegments.push(...value);
+      } else {
+        builtSegments.push(value);
+      }
+      continue;
+    }
+
+    if (catchAllMatch) {
+      const key = catchAllMatch[1];
+      const value = params[key];
+      if (value === undefined) {
+        continue;
+      }
+      if (Array.isArray(value)) {
+        builtSegments.push(...value);
+      } else {
+        builtSegments.push(value);
+      }
+      continue;
+    }
+
+    if (paramMatch) {
+      const key = paramMatch[1];
+      const value = params[key];
+      if (value === undefined) {
+        continue;
+      }
+      if (Array.isArray(value)) {
+        builtSegments.push(value.join("/"));
+      } else {
+        builtSegments.push(value);
+      }
+      continue;
+    }
+
+    builtSegments.push(segment);
+  }
+
+  const path = `/${builtSegments.join("/")}`;
+  const query = serializeSearchParams(searchParams);
+  return query.length > 0 ? `${path}?${query}` : path;
+}
+
+/**
+ * Creates an Express/Connect middleware that automatically sets request context.
+ *
+ * @example Express
+ * ```ts
+ * import express from "express";
+ * import { createExpressMiddleware } from "og-pilot-js";
+ *
+ * const app = express();
+ * app.use(createExpressMiddleware());
+ * ```
+ */
+export function createExpressMiddleware(): ExpressMiddleware {
+  return (req, _res, next) => {
+    setCurrentRequest({
+      url: req.originalUrl || req.url,
+      path: req.originalUrl || req.url,
+    });
+    next();
+  };
+}
+
+/**
+ * Helper to extract path from an Express/Node.js request object.
+ */
+export function getPathFromExpressRequest(req: ExpressRequest): string {
+  return req.originalUrl || req.url || "/";
+}
+
+// Type definitions for framework compatibility
+// These are minimal to avoid requiring framework dependencies
+
+interface ExpressRequest {
+  originalUrl?: string;
+  url?: string;
+}
+
+type ExpressMiddleware = (
+  req: ExpressRequest,
+  res: unknown,
+  next: () => void
+) => void;
+
 function extractPathFromUrl(url: string): string {
   // Handle full URLs
   if (url.startsWith("http://") || url.startsWith("https://")) {
@@ -155,6 +315,34 @@ function extractPathFromUrl(url: string): string {
   }
 
   return url;
+}
+
+function serializeSearchParams(
+  searchParams?: NextSearchParams | URLSearchParams
+): string {
+  if (!searchParams) {
+    return "";
+  }
+
+  if (searchParams instanceof URLSearchParams) {
+    return searchParams.toString();
+  }
+
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(searchParams)) {
+    if (value === undefined) {
+      continue;
+    }
+    if (Array.isArray(value)) {
+      for (const entry of value) {
+        params.append(key, entry);
+      }
+    } else {
+      params.append(key, value);
+    }
+  }
+
+  return params.toString();
 }
 
 function getPathFromEnv(): string | undefined {
