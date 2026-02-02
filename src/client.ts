@@ -1,11 +1,17 @@
 import { Configuration, OgPilotConfigOptions } from "./config";
 import { ConfigurationError, RequestError } from "./errors";
 import { signJwt } from "./jwt";
+import { getCurrentPath } from "./request-context";
 
 export interface CreateImageOptions {
   json?: boolean;
   iat?: number | Date;
   headers?: Record<string, string>;
+  /**
+   * When true, forces the path to "/" regardless of the current request.
+   * Useful for generating default/fallback OG images.
+   */
+  default?: boolean;
 }
 
 const ENDPOINT_PATH = "/api/v1/images";
@@ -14,15 +20,28 @@ export class Client {
   private config: Configuration;
 
   constructor(config: Configuration | OgPilotConfigOptions = {}) {
-    this.config = config instanceof Configuration ? config : new Configuration(config);
+    this.config =
+      config instanceof Configuration ? config : new Configuration(config);
   }
 
   async createImage(
     params: Record<string, unknown> = {},
     options: CreateImageOptions = {}
   ): Promise<unknown> {
-    const { json = false, iat, headers = {} } = options;
-    const url = await this.buildUrl(params ?? {}, iat);
+    const {
+      json = false,
+      iat,
+      headers = {},
+      default: useDefault = false,
+    } = options;
+
+    // Always include a path; manual overrides win, otherwise resolve from the current request.
+    const resolvedParams = { ...params };
+    const manualPath = resolvedParams.path;
+    delete resolvedParams.path;
+    resolvedParams.path = this.resolvePath(manualPath, useDefault);
+
+    const url = await this.buildUrl(resolvedParams, iat);
     const response = await this.request(url, json, headers);
 
     if (json) {
@@ -33,8 +52,67 @@ export class Client {
     return response.headers.get("location") ?? response.url ?? url.toString();
   }
 
-  private async request(url: URL, json: boolean, headers: Record<string, string>): Promise<Response> {
-    const fetchImpl = this.config.fetch ?? (typeof fetch !== "undefined" ? fetch : undefined);
+  /**
+   * Resolves the path parameter for the request.
+   * Priority: manual path > current request path > "/"
+   */
+  private resolvePath(manualPath: unknown, useDefault: boolean): string {
+    // Manual path always wins if provided
+    if (manualPath !== undefined && manualPath !== null) {
+      const pathStr = String(manualPath).trim();
+      if (pathStr.length > 0) {
+        return this.normalizePath(pathStr);
+      }
+    }
+
+    // If default is true, return "/"
+    if (useDefault) {
+      return "/";
+    }
+
+    // Try to get path from current request context
+    const currentPath = getCurrentPath();
+    return this.normalizePath(currentPath);
+  }
+
+  /**
+   * Normalizes a path to ensure it starts with "/" and handles full URLs.
+   */
+  private normalizePath(path: string | undefined | null): string {
+    if (path === undefined || path === null) {
+      return "/";
+    }
+
+    let cleaned = String(path).trim();
+    if (cleaned.length === 0) {
+      return "/";
+    }
+
+    // Extract path from full URLs
+    if (cleaned.startsWith("http://") || cleaned.startsWith("https://")) {
+      try {
+        const url = new URL(cleaned);
+        cleaned = url.pathname + url.search;
+      } catch {
+        // Keep as-is if URL parsing fails
+      }
+    }
+
+    // Ensure path starts with "/"
+    if (!cleaned.startsWith("/")) {
+      cleaned = "/" + cleaned;
+    }
+
+    return cleaned;
+  }
+
+  private async request(
+    url: URL,
+    json: boolean,
+    headers: Record<string, string>
+  ): Promise<Response> {
+    const fetchImpl =
+      this.config.fetch ?? (typeof fetch !== "undefined" ? fetch : undefined);
 
     if (!fetchImpl) {
       throw new ConfigurationError(
@@ -64,7 +142,7 @@ export class Client {
         method: "GET",
         headers: requestHeaders,
         redirect: "manual",
-        signal: controller.signal
+        signal: controller.signal,
       });
 
       if (response.status >= 400) {
@@ -97,7 +175,10 @@ export class Client {
     }
   }
 
-  private async buildUrl(params: Record<string, unknown>, iat?: number | Date): Promise<URL> {
+  private async buildUrl(
+    params: Record<string, unknown>,
+    iat?: number | Date
+  ): Promise<URL> {
     const payload = this.buildPayload(params, iat);
     const token = await signJwt(payload, this.apiKey());
     const url = new URL(ENDPOINT_PATH, this.config.baseUrl);
@@ -105,7 +186,10 @@ export class Client {
     return url;
   }
 
-  private buildPayload(params: Record<string, unknown>, iat?: number | Date): Record<string, unknown> {
+  private buildPayload(
+    params: Record<string, unknown>,
+    iat?: number | Date
+  ): Record<string, unknown> {
     const payload: Record<string, unknown> = { ...params };
 
     if (iat !== undefined && iat !== null) {
@@ -125,15 +209,27 @@ export class Client {
   }
 
   private validatePayload(payload: Record<string, unknown>): void {
-    if (payload.iss === undefined || payload.iss === null || String(payload.iss).length === 0) {
+    if (
+      payload.iss === undefined ||
+      payload.iss === null ||
+      String(payload.iss).length === 0
+    ) {
       throw new ConfigurationError("OG Pilot domain is missing");
     }
 
-    if (payload.sub === undefined || payload.sub === null || String(payload.sub).length === 0) {
+    if (
+      payload.sub === undefined ||
+      payload.sub === null ||
+      String(payload.sub).length === 0
+    ) {
       throw new ConfigurationError("OG Pilot API key prefix is missing");
     }
 
-    if (payload.title === undefined || payload.title === null || String(payload.title).length === 0) {
+    if (
+      payload.title === undefined ||
+      payload.title === null ||
+      String(payload.title).length === 0
+    ) {
       throw new Error("OG Pilot title is required");
     }
   }

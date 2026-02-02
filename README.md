@@ -49,6 +49,114 @@ If you omit `iat`, OG Pilot will cache the image indefinitely. Provide an `iat`
 to refresh the cache daily. You can pass a `Date`, epoch seconds, or epoch
 milliseconds (`Date.now()` is auto-converted).
 
+## Parameters
+
+All parameters are embedded in the signed JWT payload; the only query param is `token`.
+The library handles `iss` (domain) and `sub` (API key prefix) automatically.
+
+### Core parameters
+
+| Parameter     | Required | Default  | Description                                                   |
+|---------------|----------|----------|---------------------------------------------------------------|
+| `template`    | No       | `"page"` | Template name                                                 |
+| `title`       | Yes      | —        | Primary title text                                            |
+| `description` | No       | —        | Subtitle or supporting text                                   |
+| `logo_url`    | No       | —        | Logo image URL                                                |
+| `image_url`   | No       | —        | Hero image URL                                                |
+| `bg_color`    | No       | —        | Background color (hex format)                                 |
+| `text_color`  | No       | —        | Text color (hex format)                                       |
+| `iat`         | No       | —        | Issued-at timestamp for daily cache busting                   |
+| `path`        | No       | auto-set | Request path for image rendering context (see [Path handling](#path-handling)) |
+
+### Options
+
+| Option    | Default | Description                                                              |
+|-----------|---------|--------------------------------------------------------------------------|
+| `json`    | `false` | When `true`, sends `Accept: application/json` and parses the JSON response |
+| `headers` | —       | Additional HTTP headers to include with the request                      |
+| `default` | `false` | Forces `path` to `/` when `true`, unless a manual `path` is provided     |
+
+## Path handling
+
+The `path` parameter enhances OG Pilot analytics by tracking which OG images perform better across different pages on your site. By capturing the request path, you get granular insights into click-through rates and engagement for each OG image.
+
+The client automatically injects a `path` parameter on every request:
+
+| Option           | Behavior                                                                                                |
+|------------------|---------------------------------------------------------------------------------------------------------|
+| `default: false` | Uses the current request path when available (via request context), then falls back to env vars, then `/` |
+| `default: true`  | Forces the `path` parameter to `/`, regardless of the current request (unless `path` is provided explicitly) |
+| `path: "/..."`   | Uses the provided path verbatim (normalized to start with `/`), overriding auto-resolution              |
+
+### Setting up request context
+
+To enable automatic path resolution, set the current request context in your middleware:
+
+**Express:**
+
+```ts
+import { setCurrentRequest, clearCurrentRequest } from "og-pilot-js";
+
+app.use((req, res, next) => {
+  setCurrentRequest({ url: req.originalUrl });
+  res.on("finish", () => clearCurrentRequest());
+  next();
+});
+```
+
+**Next.js App Router (middleware.ts):**
+
+```ts
+import { setCurrentRequest } from "og-pilot-js";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+export function middleware(request: NextRequest) {
+  setCurrentRequest({
+    url: request.nextUrl.pathname + request.nextUrl.search
+  });
+  return NextResponse.next();
+}
+```
+
+**Using withRequestContext (preferred for async safety):**
+
+```ts
+import { withRequestContext, createImage } from "og-pilot-js";
+
+// In your request handler
+await withRequestContext({ url: req.originalUrl }, async () => {
+  const imageUrl = await createImage({
+    template: "blog_post",
+    title: "My Blog Post"
+  });
+  // path is automatically set to req.originalUrl
+});
+```
+
+### Manual path override
+
+```ts
+const imageUrl = await createImage({
+  template: "page",
+  title: "Hello OG Pilot",
+  path: "/pricing?plan=pro"
+});
+```
+
+### Default path
+
+```ts
+const imageUrl = await createImage(
+  {
+    template: "blog_post",
+    title: "Default OG Image"
+  },
+  { default: true }
+);
+// path is set to "/"
+```
+
 Fetch JSON metadata instead:
 
 ```ts
