@@ -1,5 +1,8 @@
 # OG Pilot JS
 
+> [!IMPORTANT]  
+> An active [OG Pilot](https://ogpilot.com?ref=og-pilot-js) subscription is required to use this package.
+
 A small JavaScript/TypeScript client for generating OG Pilot Open Graph images via signed JWTs.
 
 ## Installation
