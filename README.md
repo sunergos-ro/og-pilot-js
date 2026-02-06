@@ -52,6 +52,30 @@ If you omit `iat`, OG Pilot will cache the image indefinitely. Provide an `iat`
 to refresh the cache daily. You can pass a `Date`, epoch seconds, or epoch
 milliseconds (`Date.now()` is auto-converted).
 
+### Template helpers
+
+`createImage` defaults to the `page` template when `template` is omitted.
+
+Use these helpers to force a specific template:
+
+- `createBlogPostImage(...)`
+- `createPodcastImage(...)`
+- `createProductImage(...)`
+- `createEventImage(...)`
+- `createBookImage(...)`
+- `createCompanyImage(...)`
+- `createPortfolioImage(...)`
+
+```ts
+import { createBlogPostImage } from "og-pilot-js";
+
+const imageUrl = await createBlogPostImage({
+  title: "How to Build Amazing OG Images",
+  author_name: "Jane Smith",
+  publish_date: "2024-01-15"
+});
+```
+
 ## Parameters
 
 All parameters are embedded in the signed JWT payload; the only query param is `token`.

@@ -33,6 +33,61 @@ export const createImage = (
   options: Parameters<Client["createImage"]>[1] = {}
 ): ReturnType<Client["createImage"]> => client().createImage(params, options);
 
+const createTemplateImage = (
+  template: string,
+  params: Record<string, unknown> = {},
+  options: Parameters<Client["createImage"]>[1] = {}
+): ReturnType<Client["createImage"]> =>
+  createImage(
+    {
+      ...params,
+      template,
+    },
+    options
+  );
+
+export const createBlogPostImage = (
+  params: Record<string, unknown> = {},
+  options: Parameters<Client["createImage"]>[1] = {}
+): ReturnType<Client["createImage"]> =>
+  createTemplateImage("blog_post", params, options);
+
+export const createPodcastImage = (
+  params: Record<string, unknown> = {},
+  options: Parameters<Client["createImage"]>[1] = {}
+): ReturnType<Client["createImage"]> =>
+  createTemplateImage("podcast", params, options);
+
+export const createProductImage = (
+  params: Record<string, unknown> = {},
+  options: Parameters<Client["createImage"]>[1] = {}
+): ReturnType<Client["createImage"]> =>
+  createTemplateImage("product", params, options);
+
+export const createEventImage = (
+  params: Record<string, unknown> = {},
+  options: Parameters<Client["createImage"]>[1] = {}
+): ReturnType<Client["createImage"]> =>
+  createTemplateImage("event", params, options);
+
+export const createBookImage = (
+  params: Record<string, unknown> = {},
+  options: Parameters<Client["createImage"]>[1] = {}
+): ReturnType<Client["createImage"]> =>
+  createTemplateImage("book", params, options);
+
+export const createCompanyImage = (
+  params: Record<string, unknown> = {},
+  options: Parameters<Client["createImage"]>[1] = {}
+): ReturnType<Client["createImage"]> =>
+  createTemplateImage("company", params, options);
+
+export const createPortfolioImage = (
+  params: Record<string, unknown> = {},
+  options: Parameters<Client["createImage"]>[1] = {}
+): ReturnType<Client["createImage"]> =>
+  createTemplateImage("portfolio", params, options);
+
 export const createClient = (options: OgPilotConfigOptions = {}): Client =>
   new Client(options);
 
@@ -43,6 +98,13 @@ const OgPilot = {
   client,
   createClient,
   createImage,
+  createBlogPostImage,
+  createPodcastImage,
+  createProductImage,
+  createEventImage,
+  createBookImage,
+  createCompanyImage,
+  createPortfolioImage,
   setCurrentRequest,
   clearCurrentRequest,
   withRequestContext,
