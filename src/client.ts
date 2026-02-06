@@ -103,7 +103,46 @@ export class Client {
       cleaned = "/" + cleaned;
     }
 
+    if (this.config.stripExtensions) {
+      cleaned = this.stripExtension(cleaned);
+    }
+
     return cleaned;
+  }
+
+  private stripExtension(path: string): string {
+    const questionIdx = path.indexOf("?");
+    let pathPart: string;
+    let query: string | undefined;
+
+    if (questionIdx >= 0) {
+      pathPart = path.slice(0, questionIdx);
+      query = path.slice(questionIdx + 1);
+    } else {
+      pathPart = path;
+    }
+
+    const lastSlash = pathPart.lastIndexOf("/");
+    const dir = lastSlash >= 0 ? pathPart.slice(0, lastSlash) : "";
+    const base = lastSlash >= 0 ? pathPart.slice(lastSlash + 1) : pathPart;
+
+    // Don't strip dotfiles like ".hidden" or ".env"
+    if (base.startsWith(".")) {
+      return path;
+    }
+
+    const dotIdx = base.indexOf(".");
+    if (dotIdx < 0) {
+      return path; // no extension to strip
+    }
+
+    const stripped = base.slice(0, dotIdx);
+    let result = dir ? `${dir}/${stripped}` : `/${stripped}`;
+    if (result === "") {
+      result = "/";
+    }
+
+    return query !== undefined ? `${result}?${query}` : result;
   }
 
   private async request(

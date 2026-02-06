@@ -25,6 +25,7 @@ configure((config) => {
   // Optional overrides:
   // config.openTimeoutMs = 5000;
   // config.readTimeoutMs = 10000;
+  // config.stripExtensions = true;
 });
 ```
 
@@ -94,6 +95,18 @@ The library handles `iss` (domain) and `sub` (API key prefix) automatically.
 | `text_color`  | No       | —        | Text color (hex format)                                       |
 | `iat`         | No       | —        | Issued-at timestamp for daily cache busting                   |
 | `path`        | No       | auto-set | Request path for image rendering context (see [Path handling](#path-handling)) |
+
+### Configuration options
+
+| Option            | Default                   | Description                                                              |
+|-------------------|---------------------------|--------------------------------------------------------------------------|
+| `apiKey`          | `OG_PILOT_API_KEY` env var | Your OG Pilot API key                                                   |
+| `domain`          | `OG_PILOT_DOMAIN` env var  | Your domain registered with OG Pilot                                    |
+| `baseUrl`         | `https://ogpilot.com`     | OG Pilot API base URL                                                    |
+| `openTimeoutMs`   | `5000`                    | Connection timeout in milliseconds                                       |
+| `readTimeoutMs`   | `10000`                   | Read timeout in milliseconds                                             |
+| `stripExtensions` | `true`                    | When `true`, file extensions are stripped from resolved paths (see [Strip extensions](#strip-extensions)) |
+| `fetch`           | global `fetch`            | Custom fetch implementation                                              |
 
 ### Options
 
@@ -287,6 +300,43 @@ const data = await createImage(
   },
   { json: true }
 );
+```
+
+### Strip extensions
+
+When `stripExtensions` is enabled, the client removes file extensions from the
+last segment of every resolved path. This ensures that `/docs`, `/docs.md`,
+`/docs.php`, and `/docs.html` all resolve to `"/docs"`, so analytics are
+consolidated under a single path regardless of the URL extension.
+
+Multiple extensions are also stripped (`/archive.tar.gz` becomes `/archive`).
+Dotfiles like `/.hidden` are left unchanged. Query strings are preserved.
+
+```ts
+import { configure, createImage } from "og-pilot-js";
+
+configure((config) => {
+  config.stripExtensions = true;
+});
+
+// All of these resolve to path "/docs":
+await createImage({ title: "Docs", path: "/docs" });
+await createImage({ title: "Docs", path: "/docs.md" });
+await createImage({ title: "Docs", path: "/docs.php" });
+
+// Nested paths work too: /blog/my-post.html → /blog/my-post
+// Query strings are preserved: /docs.md?ref=main → /docs?ref=main
+// Dotfiles are unchanged: /.hidden stays /.hidden
+```
+
+Or pass it when creating a client:
+
+```ts
+const ogPilot = createClient({
+  apiKey: "...",
+  domain: "...",
+  stripExtensions: true,
+});
 ```
 
 ## Framework notes
