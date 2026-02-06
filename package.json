@@ -5,6 +5,20 @@
   "license": "MIT",
   "author": "Sunergos IT LLC",
   "homepage": "https://ogpilot.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sunergos-ro/og-pilot-js"
+  },
+  "bugs": {
+    "url": "https://github.com/sunergos-ro/og-pilot-js/issues"
+  },
+  "keywords": [
+    "og-pilot",
+    "open-graph",
+    "og-image",
+    "social-media",
+    "meta-tags"
+  ],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
