@@ -26,7 +26,7 @@ export class Client {
 
   async createImage(
     params: Record<string, unknown> = {},
-    options: CreateImageOptions = {}
+    options: CreateImageOptions = {},
   ): Promise<unknown> {
     const {
       json = false,
@@ -148,14 +148,14 @@ export class Client {
   private async request(
     url: URL,
     json: boolean,
-    headers: Record<string, string>
+    headers: Record<string, string>,
   ): Promise<Response> {
     const fetchImpl =
       this.config.fetch ?? (typeof fetch !== "undefined" ? fetch : undefined);
 
     if (!fetchImpl) {
       throw new ConfigurationError(
-        "Fetch API is not available; provide a fetch implementation in the configuration."
+        "Fetch API is not available; provide a fetch implementation in the configuration.",
       );
     }
 
@@ -180,7 +180,7 @@ export class Client {
       const response = await fetchImpl(url.toString(), {
         method: "POST",
         headers: requestHeaders,
-        redirect: "manual",
+        redirect: "follow",
         signal: controller.signal,
       });
 
@@ -188,7 +188,7 @@ export class Client {
         const body = await response.text().catch(() => "");
         throw new RequestError(
           `OG Pilot request failed with status ${response.status}: ${body}`,
-          response.status
+          response.status,
         );
       }
 
@@ -216,7 +216,7 @@ export class Client {
 
   private async buildUrl(
     params: Record<string, unknown>,
-    iat?: number | Date
+    iat?: number | Date,
   ): Promise<URL> {
     const payload = this.buildPayload(params, iat);
     const token = await signJwt(payload, this.apiKey());
@@ -227,7 +227,7 @@ export class Client {
 
   private buildPayload(
     params: Record<string, unknown>,
-    iat?: number | Date
+    iat?: number | Date,
   ): Record<string, unknown> {
     const payload: Record<string, unknown> = { ...params };
 
