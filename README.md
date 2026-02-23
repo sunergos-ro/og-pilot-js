@@ -81,6 +81,7 @@ const imageUrl = await createBlogPostImage({
 
 All parameters are embedded in the signed JWT payload; the only query param is `token`.
 The library handles `iss` (domain) and `sub` (API key prefix) automatically.
+Requests are sent as `POST` to `https://ogpilot.com/api/v1/images` with `redirect: "manual"`.
 
 ### Core parameters
 

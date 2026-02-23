@@ -178,7 +178,7 @@ export class Client {
 
     try {
       const response = await fetchImpl(url.toString(), {
-        method: "GET",
+        method: "POST",
         headers: requestHeaders,
         redirect: "manual",
         signal: controller.signal,
