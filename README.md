@@ -49,6 +49,13 @@ const imageUrl = await createImage({
 });
 ```
 
+`createImage` is fail-safe and does not throw to your app. If request,
+configuration, validation, or parsing fails, it logs with `console.error` and
+returns:
+
+- URL mode (`json` omitted or `false`): `null`
+- JSON mode (`json: true`): `{ image_url: null }`
+
 If you omit `iat`, OG Pilot will cache the image indefinitely. Provide an `iat`
 to refresh the cache daily. You can pass a `Date`, epoch seconds, or epoch
 milliseconds (`Date.now()` is auto-converted).
@@ -301,6 +308,8 @@ const data = await createImage(
   },
   { json: true }
 );
+// Success: data.image_url is usually a URL string
+// Failure: data.image_url is null, and an error is logged
 ```
 
 ### Strip extensions

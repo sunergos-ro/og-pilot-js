@@ -14,6 +14,21 @@ export interface CreateImageOptions {
   default?: boolean;
 }
 
+export interface CreateImageJsonOptions extends CreateImageOptions {
+  json: true;
+}
+
+export interface CreateImageUrlOptions extends CreateImageOptions {
+  json?: false;
+}
+
+export interface CreateImageJsonResult extends Record<string, unknown> {
+  image_url?: string | null;
+}
+
+export type CreateImageUrlResult = string | null;
+export type CreateImageResult = CreateImageUrlResult | CreateImageJsonResult;
+
 const ENDPOINT_PATH = "/api/v1/images";
 
 export class Client {
@@ -25,9 +40,21 @@ export class Client {
   }
 
   async createImage(
+    params: Record<string, unknown>,
+    options: CreateImageJsonOptions,
+  ): Promise<CreateImageJsonResult>;
+  async createImage(
+    params?: Record<string, unknown>,
+    options?: CreateImageUrlOptions,
+  ): Promise<CreateImageUrlResult>;
+  async createImage(
+    params?: Record<string, unknown>,
+    options?: CreateImageOptions,
+  ): Promise<CreateImageResult>;
+  async createImage(
     params: Record<string, unknown> = {},
     options: CreateImageOptions = {},
-  ): Promise<unknown> {
+  ): Promise<CreateImageResult> {
     const {
       json = false,
       iat,
@@ -35,21 +62,26 @@ export class Client {
       default: useDefault = false,
     } = options;
 
-    // Always include a path; manual overrides win, otherwise resolve from the current request.
-    const resolvedParams = { ...params };
-    const manualPath = resolvedParams.path;
-    delete resolvedParams.path;
-    resolvedParams.path = this.resolvePath(manualPath, useDefault);
+    try {
+      // Always include a path; manual overrides win, otherwise resolve from the current request.
+      const resolvedParams = { ...params };
+      const manualPath = resolvedParams.path;
+      delete resolvedParams.path;
+      resolvedParams.path = this.resolvePath(manualPath, useDefault);
 
-    const url = await this.buildUrl(resolvedParams, iat);
-    const response = await this.request(url, json, headers);
+      const url = await this.buildUrl(resolvedParams, iat);
+      const response = await this.request(url, json, headers);
 
-    if (json) {
-      const body = await response.text();
-      return JSON.parse(body);
+      if (json) {
+        const body = await response.text();
+        return JSON.parse(body) as CreateImageJsonResult;
+      }
+
+      return response.headers.get("location") ?? response.url ?? url.toString();
+    } catch (error) {
+      this.logCreateImageError(error);
+      return json ? { image_url: null } : null;
     }
-
-    return response.headers.get("location") ?? response.url ?? url.toString();
   }
 
   /**
@@ -143,6 +175,26 @@ export class Client {
     }
 
     return query !== undefined ? `${result}?${query}` : result;
+  }
+
+  private logCreateImageError(error: unknown): void {
+    try {
+      if (typeof console === "undefined" || typeof console.error !== "function") {
+        return;
+      }
+
+      if (error instanceof Error) {
+        console.error(
+          `[og-pilot-js] createImage failed: ${error.message}`,
+          error,
+        );
+        return;
+      }
+
+      console.error("[og-pilot-js] createImage failed", error);
+    } catch {
+      // Never throw from fail-safe error logging.
+    }
   }
 
   private async request(
