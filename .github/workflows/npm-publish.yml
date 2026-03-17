@@ -1,5 +1,5 @@
-# This workflow validates the package and publishes it to npm when a GitHub
-# release is published.
+# This workflow validates the package and publishes it to npm via GitHub OIDC
+# trusted publishing when a GitHub release is published.
 
 name: Node.js Package
 
@@ -26,5 +26,3 @@ jobs:
       - run: npm run typecheck
       - run: npm run build
       - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
