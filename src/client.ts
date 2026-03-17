@@ -139,7 +139,20 @@ export class Client {
       cleaned = this.stripExtension(cleaned);
     }
 
+    if (this.config.stripQueryParameters) {
+      cleaned = this.stripQueryParametersFromPath(cleaned);
+    }
+
     return cleaned;
+  }
+
+  private stripQueryParametersFromPath(path: string): string {
+    const questionIdx = path.indexOf("?");
+    if (questionIdx < 0) {
+      return path;
+    }
+
+    return path.slice(0, questionIdx);
   }
 
   private stripExtension(path: string): string {

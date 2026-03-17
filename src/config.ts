@@ -6,6 +6,7 @@ export interface OgPilotConfigOptions {
   readTimeoutMs?: number;
   fetch?: typeof fetch;
   stripExtensions?: boolean;
+  stripQueryParameters?: boolean;
 }
 
 const DEFAULT_BASE_URL = "https://ogpilot.com";
@@ -26,6 +27,7 @@ export class Configuration {
   readTimeoutMs?: number;
   fetch?: typeof fetch;
   stripExtensions: boolean;
+  stripQueryParameters: boolean;
 
   constructor(options: OgPilotConfigOptions = {}) {
     this.apiKey = options.apiKey ?? readEnv("OG_PILOT_API_KEY");
@@ -35,5 +37,6 @@ export class Configuration {
     this.readTimeoutMs = options.readTimeoutMs ?? 10000;
     this.fetch = options.fetch;
     this.stripExtensions = options.stripExtensions ?? true;
+    this.stripQueryParameters = options.stripQueryParameters ?? false;
   }
 }

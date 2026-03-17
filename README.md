@@ -549,6 +549,7 @@ Requests are sent as `POST` to `https://ogpilot.com/api/v1/images` with `redirec
 | `openTimeoutMs`   | `5000`                    | Connection timeout in milliseconds                                       |
 | `readTimeoutMs`   | `10000`                   | Read timeout in milliseconds                                             |
 | `stripExtensions` | `true`                    | When `true`, file extensions are stripped from resolved paths (see [Strip extensions](#strip-extensions)) |
+| `stripQueryParameters` | `false`              | When `true`, query strings are removed from resolved paths before signing (see [Strip query parameters](#strip-query-parameters)) |
 | `fetch`           | global `fetch`            | Custom fetch implementation                                              |
 
 ### Options
@@ -782,6 +783,25 @@ const ogPilot = createClient({
   domain: "...",
   stripExtensions: true,
 });
+```
+
+### Strip query parameters
+
+When `stripQueryParameters` is enabled, the client removes the query string
+from every resolved path before it is signed. This keeps analytics grouped
+under the canonical path even when URLs differ only by tracking or pagination
+parameters. It works alongside `stripExtensions`, so
+`/archive.tar.gz?ref=campaign` resolves to `"/archive"` when both options are
+enabled.
+
+```ts
+import { configure, createImage } from "og-pilot-js";
+
+configure((config) => {
+  config.stripQueryParameters = true;
+});
+
+await createImage({ title: "Docs", path: "/docs?ref=main" });
 ```
 
 ## Framework notes
