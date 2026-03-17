@@ -1,13 +1,13 @@
 {
   "name": "og-pilot-js",
-  "version": "0.4.6",
+  "version": "0.4.7",
   "description": "JavaScript/TypeScript client for the OG Pilot Open Graph image generator.",
   "license": "MIT",
   "author": "Sunergos IT LLC",
   "homepage": "https://ogpilot.com",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sunergos-ro/og-pilot-js"
+    "url": "git+https://github.com/sunergos-ro/og-pilot-js.git"
   },
   "bugs": {
     "url": "https://github.com/sunergos-ro/og-pilot-js/issues"
@@ -35,6 +35,9 @@
     "README.md",
     "LICENSE"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "sideEffects": false,
   "engines": {
     "node": ">=18"
