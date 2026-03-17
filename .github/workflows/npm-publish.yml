@@ -20,7 +20,9 @@ jobs:
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org/
-      - run: npm ci
+      # This package does not commit a package-lock.json, so release jobs
+      # must use npm install instead of npm ci.
+      - run: npm install
       - run: npm run typecheck
       - run: npm run build
       - run: npm publish --provenance --access public
