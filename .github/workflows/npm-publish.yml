@@ -20,9 +20,11 @@ jobs:
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org/
+          # Trusted publishing must not inherit setup-node's default GitHub token.
+          token: ""
       # This package does not commit a package-lock.json, so release jobs
       # must use npm install instead of npm ci.
       - run: npm install
       - run: npm run typecheck
       - run: npm run build
-      - run: npm publish --provenance --access public
+      - run: npm publish
