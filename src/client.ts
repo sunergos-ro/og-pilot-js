@@ -77,7 +77,9 @@ export class Client {
         return JSON.parse(body) as CreateImageJsonResult;
       }
 
-      return response.headers.get("location") ?? response.url ?? url.toString();
+      const imageUrl =
+        response.headers.get("location") ?? response.url ?? url.toString();
+      return this.isStatusPlaceholder(imageUrl) ? null : imageUrl;
     } catch (error) {
       this.logCreateImageError(error);
       return json ? { image_url: null } : null;
@@ -208,6 +210,10 @@ export class Client {
     } catch {
       // Never throw from fail-safe error logging.
     }
+  }
+
+  private isStatusPlaceholder(url: string): boolean {
+    return /\/status\/(?:processing|failed)\.(?:jpg|png)$/.test(url);
   }
 
   private async request(
