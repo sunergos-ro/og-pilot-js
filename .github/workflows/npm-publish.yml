@@ -19,7 +19,8 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 22
-      - run: npm install -g npm@^11.5.1
+      # Use the npm that ships with the runner's Node installation; upgrading npm
+      # in-place has been failing intermittently before the package build starts.
       # This package does not commit a package-lock.json, so release jobs
       # must use npm install instead of npm ci.
       - run: npm install
