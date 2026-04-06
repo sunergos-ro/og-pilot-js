@@ -26,6 +26,9 @@ configure((config) => {
   // config.openTimeoutMs = 5000;
   // config.readTimeoutMs = 10000;
   // config.stripExtensions = true;
+  // config.imageType = "webp";
+  // config.quality = 82;
+  // config.maxBytes = 220000;
 });
 ```
 
@@ -59,6 +62,20 @@ returns:
 If you omit `iat`, OG Pilot will cache the image indefinitely. Provide an `iat`
 to refresh the cache daily. You can pass a `Date`, epoch seconds, or epoch
 milliseconds (`Date.now()` is auto-converted).
+
+If you want consistent delivery settings across your app, set them globally
+once:
+
+```ts
+configure((config) => {
+  config.imageType = "webp";
+  config.quality = 82;
+  config.maxBytes = 220000;
+});
+```
+
+Per-call payload values still override those defaults when you need a one-off
+`image_type`, `quality`, or `max_bytes`.
 
 ### Template helpers
 
@@ -536,6 +553,9 @@ Requests are sent as `POST` to `https://ogpilot.com/api/v1/images` with `redirec
 | `image_url`   | No       | —        | Hero image URL                                                |
 | `bg_color`    | No       | —        | Background color (hex format)                                 |
 | `text_color`  | No       | —        | Text color (hex format)                                       |
+| `image_type`  | No       | —        | Delivered image format: `jpeg`, `png`, `webp`, or `gif`       |
+| `quality`     | No       | —        | Delivered image quality from `1` to `100`                     |
+| `max_bytes`   | No       | —        | Maximum delivered image size in bytes                         |
 | `iat`         | No       | —        | Issued-at timestamp for daily cache busting                   |
 | `path`        | No       | auto-set | Request path for image rendering context (see [Path handling](#path-handling)) |
 
@@ -550,6 +570,9 @@ Requests are sent as `POST` to `https://ogpilot.com/api/v1/images` with `redirec
 | `readTimeoutMs`   | `10000`                   | Read timeout in milliseconds                                             |
 | `stripExtensions` | `true`                    | When `true`, file extensions are stripped from resolved paths (see [Strip extensions](#strip-extensions)) |
 | `stripQueryParameters` | `false`              | When `true`, query strings are removed from resolved paths before signing (see [Strip query parameters](#strip-query-parameters)) |
+| `imageType`       | —                         | Default delivered image format: `jpeg`, `png`, `webp`, or `gif`          |
+| `quality`         | —                         | Default delivered image quality from `1` to `100`                        |
+| `maxBytes`        | —                         | Default maximum delivered image size in bytes                            |
 | `fetch`           | global `fetch`            | Custom fetch implementation                                              |
 
 ### Options

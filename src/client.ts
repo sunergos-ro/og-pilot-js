@@ -65,6 +65,7 @@ export class Client {
     try {
       // Always include a path; manual overrides win, otherwise resolve from the current request.
       const resolvedParams = { ...params };
+      this.applyConfiguredImageDefaults(resolvedParams);
       const manualPath = resolvedParams.path;
       delete resolvedParams.path;
       resolvedParams.path = this.resolvePath(manualPath, useDefault);
@@ -190,6 +191,22 @@ export class Client {
     }
 
     return query !== undefined ? `${result}?${query}` : result;
+  }
+
+  private applyConfiguredImageDefaults(params: Record<string, unknown>): void {
+    const defaults: Array<[string, unknown]> = [
+      ["image_type", this.config.imageType],
+      ["quality", this.config.quality],
+      ["max_bytes", this.config.maxBytes],
+    ];
+
+    defaults.forEach(([key, value]) => {
+      if (value === undefined || key in params) {
+        return;
+      }
+
+      params[key] = value;
+    });
   }
 
   private logCreateImageError(error: unknown): void {

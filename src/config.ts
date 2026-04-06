@@ -7,6 +7,9 @@ export interface OgPilotConfigOptions {
   fetch?: typeof fetch;
   stripExtensions?: boolean;
   stripQueryParameters?: boolean;
+  imageType?: "jpeg" | "png" | "webp" | "gif";
+  quality?: number;
+  maxBytes?: number;
 }
 
 const DEFAULT_BASE_URL = "https://ogpilot.com";
@@ -28,6 +31,9 @@ export class Configuration {
   fetch?: typeof fetch;
   stripExtensions: boolean;
   stripQueryParameters: boolean;
+  imageType?: "jpeg" | "png" | "webp" | "gif";
+  quality?: number;
+  maxBytes?: number;
 
   constructor(options: OgPilotConfigOptions = {}) {
     this.apiKey = options.apiKey ?? readEnv("OG_PILOT_API_KEY");
@@ -38,5 +44,8 @@ export class Configuration {
     this.fetch = options.fetch;
     this.stripExtensions = options.stripExtensions ?? true;
     this.stripQueryParameters = options.stripQueryParameters ?? false;
+    this.imageType = options.imageType;
+    this.quality = options.quality;
+    this.maxBytes = options.maxBytes;
   }
 }
