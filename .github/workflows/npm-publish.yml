@@ -18,9 +18,9 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: 22
-      # Use the npm that ships with the runner's Node installation; upgrading npm
-      # in-place has been failing intermittently before the package build starts.
+          node-version: 24
+      # Use a recent Node runtime that already includes a modern npm build for
+      # trusted publishing instead of upgrading npm in-place on the runner.
       # This package does not commit a package-lock.json, so release jobs
       # must use npm install instead of npm ci.
       - run: npm install
